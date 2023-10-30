@@ -84,12 +84,15 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.MSELoss()
-    early_stopper = EarlyStopper(patience=1, min_delta=0)
+    early_stopper = EarlyStopper(patience, min_delta)
 
     model.train()
     print("=> Starting training")
 
-    for _ in range(n_epochs):
+    for epoch in range(n_epochs):
+
+        print(f"Epoch: {epoch}")
+
         epoch_loss = []
 
         model.train()
@@ -123,7 +126,6 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
             if early_stopper.early_stop(l):             
                 break
         
-        if len(test_loss) > 1 and (test_loss[-1] < test_loss[-2]):
             weights = model.state_dict()
 
     return weights, train_loss, test_loss

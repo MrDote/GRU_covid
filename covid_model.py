@@ -40,7 +40,7 @@ x_train, x_test, y_train, y_test = convert_transpose(x_train), convert_transpose
 
 
 dataset_train = data.TensorDataset(x_train, y_train)
-train_loader = data.DataLoader(dataset_train, batch_size = 20, shuffle = True)
+train_loader = data.DataLoader(dataset_train, batch_size, shuffle = True)
 
 
 dataset_test = data.TensorDataset(x_test, y_test)
@@ -54,27 +54,25 @@ dataset_test = data.TensorDataset(x_test, y_test)
 
 #! MODEL
 
-model = GRU(68)
+model = GRU()
+# model = GRU(68)
 
 
-weights, train_err, test_err = train_model(model, train_loader, dataset_test)
+# weights, train_err, test_err = train_model(model, train_loader, dataset_test)
 
 
 #* save model weights
-torch.save(weights, 'weights/covid/weights.pt')
+# torch.save(weights, 'weights/covid/weights.pt')
 # weights = torch.load('weights/covid/weights.pt')
 
 
 # print(train_err)
 # print(test_err)
 
+
+
+
 # run_summary(model)
-
-
-
-
-
-
 
 
 
@@ -87,4 +85,4 @@ torch.save(weights, 'weights/covid/weights.pt')
 # test_priv = test[test["seq_length"] == test_seq_len]
 
 # final_preds = post_process(model, test_pub, test_priv, weights)
-# final_preds.to_csv("results/covid.csv")
+# final_preds.to_csv("results/covid.csv.gz", compression="gzip")

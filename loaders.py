@@ -5,7 +5,7 @@ import pandas as pd
 from helpers import *
 
 
-def make_loaders(samples=None):
+def make_loaders(samples: int = None):
     df_train = pd.read_json(data_dir + 'train.json', lines=True)
 
 

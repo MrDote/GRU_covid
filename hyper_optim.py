@@ -5,7 +5,7 @@ from config import *
 from helpers import *
 from loaders import make_loaders
 
-from ray import train
+from ray import train, tune
 
 
 def objective_wrapper():
@@ -22,3 +22,19 @@ def objective_wrapper():
             train.report({"loss": test_err[-1]})
 
     return objective
+
+
+def create_tuner(algo, search_space):
+    return tune.Tuner(
+        objective_wrapper(),
+        tune_config=tune.TuneConfig(
+            metric="loss",
+            num_samples=2,
+            mode="min",
+            search_alg=algo,
+        ),
+        run_config=train.RunConfig(
+            stop={"training_iteration": 5},
+        ),
+        param_space=search_space,
+    )

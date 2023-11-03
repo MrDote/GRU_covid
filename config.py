@@ -11,19 +11,20 @@ train_seq_len = 107
 test_seq_len = 130
 
 
-batch_size = 5
-n_epochs = 25
+batch_size = 64
+n_epochs = 5
 learning_rate = 0.001
 
 
 #* model
-embedding_dim = 200
+embedding_dim = 150
 hidden_dim = 256
-num_layers = 2
+num_layers = 1
 bidirectional = True
-dropout = 0.4
+dropout = 0.3
 
 
 #* early stopping
+early = False
 patience = 2
 min_delta = 0

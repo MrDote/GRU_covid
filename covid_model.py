@@ -1,49 +1,30 @@
-import torch
+import os
+os.environ['RAY_AIR_NEW_OUTPUT'] = '0'
 
-import torch.utils.data as data
-from sklearn.model_selection import train_test_split
-import numpy as np
-import pandas as pd
+# import torch
 
-import matplotlib.pyplot as plt
+from ray import train, tune
+from ray.tune.search.optuna import OptunaSearch
 
-from helpers import *
 from config import *
-from GRU import *
+from loaders import make_loaders
+from hyper_optim import objective_wrapper
+from GRU import GRU
 
 
 # np.random.seed(seed) 
 # torch.manual_seed(seed)
 
 
-# TODO: try weight init
+# TODO:
+#* weight init
+#* ray tune for param optimization: add early stopping to stop criteria
+#* check optim.step returning loss
 
 
 #! DATA
 
 #* combined mapping
-
-
-
-train = pd.read_json(data_dir + 'train.json', lines=True)
-
-
-train = filter_signal_noise(train)
-train = preprocess(train, feature_cols)
-
-
-x_train, x_test, y_train, y_test = train_test_split(to_np_array(train, feature_cols, np.int32), to_np_array(train, target_cols, np.float32), test_size=.1, random_state=34)
-
-
-x_train, x_test, y_train, y_test = convert_transpose(x_train), convert_transpose(x_test), convert_transpose(y_train), convert_transpose(y_test)
-
-
-
-dataset_train = data.TensorDataset(x_train, y_train)
-train_loader = data.DataLoader(dataset_train, batch_size, shuffle = True)
-
-
-dataset_test = data.TensorDataset(x_test, y_test)
 
 
 
@@ -54,10 +35,10 @@ dataset_test = data.TensorDataset(x_test, y_test)
 
 #! MODEL
 
-model = GRU()
-# model = GRU(68)
+# model = GRU_model()
+# model = GRU_model(68)
 
-
+# train_loader, dataset_test = make_loaders()
 # weights, train_err, test_err = train_model(model, train_loader, dataset_test)
 
 
@@ -71,8 +52,43 @@ model = GRU()
 
 
 
-
 # run_summary(model)
+
+
+
+
+
+
+
+
+#! HYPERPARAMETER OPTIMIZATION
+
+search_space = {"lr": tune.loguniform(1e-4, 1e-3),
+                "dropout": tune.uniform(0.2, 0.5)}
+
+algo = OptunaSearch()
+
+tuner = tune.Tuner(
+    objective_wrapper(),
+    tune_config=tune.TuneConfig(
+        metric="loss",
+        num_samples=2,
+        mode="min",
+        search_alg=algo,
+    ),
+    run_config=train.RunConfig(
+        stop={"training_iteration": 5},
+    ),
+    param_space=search_space,
+)
+
+
+results = tuner.fit()
+print("Best config is:", results.get_best_result().config)
+
+
+
+
 
 
 

@@ -9,7 +9,7 @@ import torch.utils.data as data
 from torchinfo import summary
 
 from typing import List
-from GRU import EarlyStopper
+# from GRU import EarlyStopper
 
 from config import *
 
@@ -77,21 +77,21 @@ def post_process(model:nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.Da
         return final_preds
 
 
-def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset):
+def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset, optimizer: optim.Optimizer, n_epochs: int = n_epochs):
     weights = None
     train_loss = []
     test_loss = []
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.MSELoss()
-    early_stopper = EarlyStopper(patience, min_delta)
+    # early_stopper = EarlyStopper(patience, min_delta)
 
     model.train()
-    print("=> Starting training")
+    # print("=> Starting training")
 
     for epoch in range(n_epochs):
 
-        print(f"Epoch: {epoch}")
+        # print(f"Epoch: {epoch+1}")
 
         epoch_loss = []
 
@@ -123,8 +123,8 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
         
             test_loss.append(l)
 
-            if early_stopper.early_stop(l):             
-                break
+            # if early_stopper.early_stop(l):             
+            #     break
         
             weights = model.state_dict()
 

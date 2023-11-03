@@ -11,7 +11,7 @@ train_seq_len = 107
 test_seq_len = 130
 
 
-batch_size = 64
+batch_size = 5
 n_epochs = 25
 learning_rate = 0.001
 

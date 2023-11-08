@@ -10,7 +10,11 @@ class GRU(nn.Module):
         self.embeddings = nn.Embedding(len(mapping), embedding_dim)
         self.gru = nn.GRU(embedding_dim*in_size, hidden_dim, num_layers=num_layers, batch_first=True, bidirectional=bidirectional)
         self.dropout = nn.Dropout1d(p=dropout)
-        self.linear = nn.Linear(hidden_dim*2, out_size)
+        
+        if bidirectional:
+            self.linear = nn.Linear(hidden_dim*2, out_size)
+        else:
+            self.linear = nn.Linear(hidden_dim, out_size)
 
         self.pred_len = pred_len
 

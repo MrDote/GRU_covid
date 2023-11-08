@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+import asyncio
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -42,7 +44,7 @@ def run_summary(model: nn.Module, batch_size = 20, seq_scored = 107, n_feature_c
     summary(model, input_data=torch.randint(0, len(mapping), (batch_size, seq_scored, n_feature_cols)))
 
 
-def post_process(model:nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.DataFrame, weights):
+def post_process(model: nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.DataFrame, weights):
     model.load_state_dict(weights)
     model.eval()
 
@@ -51,7 +53,6 @@ def post_process(model:nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.Da
         final_preds = pd.DataFrame()
 
         #* make predictions on test data
-        # for (df, name) in [(pub_dataset, 'public')]:
         for df in [pub_dataset, priv_dataset]:
             X = preprocess(df, feature_cols)
             X = to_np_array(df, feature_cols, np.int32)
@@ -88,11 +89,11 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
         early_stopper = EarlyStopper(patience, min_delta)
 
     model.train()
-    print("=> Starting training")
+    # print("=> Starting training")
 
     for epoch in range(n_epochs):
 
-        print(f"Epoch: {epoch+1}")
+        # print(f"Epoch: {epoch+1}")
 
         epoch_loss = []
 
@@ -130,3 +131,15 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
             weights = model.state_dict()
 
     return weights, train_loss, test_loss
+
+
+# def train_model_async(*args):
+
+#     async def print_async(words):
+#         await asyncio.sleep(0)
+#         print(words)
+
+#     async def wrapper():
+#         return await train_model(*args, print_async = print_async)
+    
+#     return asyncio.run(wrapper())

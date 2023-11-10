@@ -1,18 +1,14 @@
-import os
-os.environ['RAY_AIR_NEW_OUTPUT'] = '0'
-
 from ray import tune
 from ray.tune.search.optuna import OptunaSearch
 
 from config import *
-from loaders import make_loaders
-from helpers import train_model
 from hyper_optim import *
 from GRU import GRU
 
 
-# np.random.seed(seed)
-# torch.manual_seed(seed)
+if seed:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 # TODO:
@@ -36,18 +32,25 @@ from GRU import GRU
 
 #! HYPERPARAMETER OPTIMIZATION
 
-search_space = {"lr": tune.loguniform(5e-5, 5e-4),
-                "dropout": tune.uniform(0.2, 0.5),
-                "num_layers": tune.randint(1, 3)
-                }
+# search_space = {
+#                 # "lr": tune.loguniform(6e-4, 5e-3),
+#                 # "lr": tune.choice([3e-4, 5e-4, 7e-4, 9e-4]),
+#                 "lr": 0.0013,
+#                 # "dropout": tune.uniform(0.2, 0.5),
+#                 "dropout": tune.choice([0.2, 0.21]),
+#                 # "num_layers": tune.randint(1, 3)
+#                 "num_layers": 2
+#                 }
 
-algo = OptunaSearch()
+# algo = OptunaSearch()
 
 
-tuner: tune.Tuner = create_tuner(algo, search_space, samples = 300, n_models = 5, max_epochs = 10)
+# tuner: tune.Tuner = create_tuner(algo, search_space, samples = None, n_models = 8, max_epochs = 30, grace_period = 5, reduction_factor=2)
 
-results = tuner.fit()
-print("Best config is:", results.get_best_result().config)
+
+# results = tuner.fit()
+# print("Best config is:", results.get_best_result().config)
+# print(results.get_dataframe())
 
 
 
@@ -88,12 +91,16 @@ print("Best config is:", results.get_best_result().config)
 
 #! POST-PROCESSING
 
-# test = pd.read_json(data_dir + 'test.json', lines=True)
-# test_pub = test[test["seq_length"] == train_seq_len]
-# test_priv = test[test["seq_length"] == test_seq_len]
+#* try models:
+
+
+test = pd.read_json(data_dir + 'test.json', lines=True)
+test_pub = test[test["seq_length"] == train_seq_len]
+test_priv = test[test["seq_length"] == test_seq_len]
 
 # weights = torch.load('weights/covid/weights.pt')
-# model = GRU()
+weights = torch.load("/Users/antonbelov/ray_results/objective_2023-11-10_16-57-31/objective_4a6a9086/checkpoint_000009/objective_4a6a9086.pt")
+model = GRU()
 
-# final_preds = post_process(model, test_pub, test_priv, weights)
-# final_preds.to_csv("results/covid.csv.gz", compression="gzip")
+final_preds = post_process(model, test_pub, test_priv, weights)
+final_preds.to_csv("results/covid.csv.gz", compression="gzip")

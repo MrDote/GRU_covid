@@ -1,7 +1,10 @@
+import os
+import tempfile
 import numpy as np
 import pandas as pd
 
-import asyncio
+from ray import train
+from ray.train import Checkpoint, ScalingConfig
 
 import torch
 import torch.nn as nn
@@ -78,7 +81,7 @@ def post_process(model: nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.D
         return final_preds
 
 
-def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset, optimizer: optim.Optimizer, n_epochs: int = n_epochs, early_stopping: bool = early):
+def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset, optimizer: optim.Optimizer, n_epochs: int = n_epochs, early_stopping: bool = early, lr_name: str = None):
     weights = None
     train_loss = []
     test_loss = []
@@ -127,19 +130,23 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
 
             if early_stopping and early_stopper.early_stop(l):             
                 break
-        
+            
             weights = model.state_dict()
 
+            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                # temp_checkpoint_dir = os.mkdir(os.path.join(train.get_context().get_trial_dir(), "checkpoint"))
+                name = train.get_context().get_trial_name()
+
+                torch.save(
+                    model.state_dict(),
+                    os.path.join(temp_checkpoint_dir, "weights.pt"),
+                )
+                
+                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+
+                train.report({"loss": l}, checkpoint = checkpoint)
+        
+            
+            # torch.save(weights, os.path.join(work_dir, "ray_weights", str(lr_name)))
+
     return weights, train_loss, test_loss
-
-
-# def train_model_async(*args):
-
-#     async def print_async(words):
-#         await asyncio.sleep(0)
-#         print(words)
-
-#     async def wrapper():
-#         return await train_model(*args, print_async = print_async)
-    
-#     return asyncio.run(wrapper())

@@ -1,4 +1,7 @@
-seed = 42
+import os
+work_dir = os.getcwd()
+
+seed = None
 
 data_dir = "data/covid/"
 
@@ -12,8 +15,8 @@ test_seq_len = 130
 
 
 n_samples = 300
-batch_size = 20
-n_epochs = 2
+batch_size = 30
+n_epochs = 1
 learning_rate = 0.001
 
 

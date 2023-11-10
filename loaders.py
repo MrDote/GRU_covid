@@ -15,7 +15,7 @@ def make_loaders(samples: int = None):
     if samples:
         df_train = df_train.iloc[:samples]
 
-    x_train, x_test, y_train, y_test = train_test_split(to_np_array(df_train, feature_cols, np.int32), to_np_array(df_train, target_cols, np.float32), test_size=.1, random_state=34)
+    x_train, x_test, y_train, y_test = train_test_split(to_np_array(df_train, feature_cols, np.int32), to_np_array(df_train, target_cols, np.float32), test_size=.2)
 
 
     x_train, x_test, y_train, y_test = convert_transpose(x_train), convert_transpose(x_test), convert_transpose(y_train), convert_transpose(y_test)

@@ -37,7 +37,7 @@ def objective_wrapper(num_samples):
         )
 
         while True:
-            train_model(model, train_loader, dataset_test, optimizer, n_epochs=1, lr_name=round(config["lr"], 8))
+            train_model(model, train_loader, dataset_test, optimizer, n_epochs=1)
 
     return objective
 

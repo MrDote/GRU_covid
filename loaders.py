@@ -5,17 +5,19 @@ import pandas as pd
 from helpers import *
 
 
-def make_loaders(samples: int = None):
+def make_loaders(samples: int = n_samples):
     df_train = pd.read_json(data_dir + 'train.json', lines=True)
 
 
-    df_train = filter_signal_noise(df_train)
+    # df_train = filter_signal_noise(df_train)
     df_train = preprocess(df_train, feature_cols)
 
     if samples:
         df_train = df_train.iloc[:samples]
 
-    x_train, x_test, y_train, y_test = train_test_split(to_np_array(df_train, feature_cols, np.int32), to_np_array(df_train, target_cols, np.float32), test_size=.2)
+    print(df_train['signal_to_noise'].value_counts())
+
+    x_train, x_test, y_train, y_test = train_test_split(to_np_array(df_train, feature_cols), to_np_array(df_train, target_cols), test_size=.1, stratify=df_train["signal_to_noise"])
 
 
     x_train, x_test, y_train, y_test = convert_transpose(x_train), convert_transpose(x_test), convert_transpose(y_train), convert_transpose(y_test)
@@ -31,3 +33,5 @@ def make_loaders(samples: int = None):
     # test_loader = data.DataLoader(dataset_test, batch_size, shuffle = True)
 
     return train_loader, dataset_test
+
+# make_loaders(None)

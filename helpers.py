@@ -21,7 +21,8 @@ from config import *
 
 
 def filter_signal_noise(df: pd.DataFrame):
-    return df[df["signal_to_noise"] >= 1].reset_index()
+    # return df[df["signal_to_noise"] >= 1].reset_index()
+    return df[df["SN_filter"] == 1].reset_index()
 
 
 def preprocess(df: pd.DataFrame, cols: List):
@@ -30,7 +31,7 @@ def preprocess(df: pd.DataFrame, cols: List):
     return df
 
 
-def to_np_array(df: pd.DataFrame, cols: List, dtype: np.dtype):
+def to_np_array(df: pd.DataFrame, cols: List, dtype: np.dtype = np.int32):
     return np.array(df[cols].values.tolist(), dtype=dtype)
 
 
@@ -39,6 +40,8 @@ def convert_transpose(t: np.ndarray):
 
 
 def MCRMSE(true: torch.Tensor, preds: torch.Tensor):
+    # weights = torch.tensor([0.3, 0.3, 0.3, 0.05, 0.05])
+    # individual_batch = torch.mean(torch.sqrt(torch.mean(torch.square(true - preds), dim=1) * weights), dim=1)
     individual_batch = torch.mean(torch.sqrt(torch.mean(torch.square(true - preds), dim=1)), dim=1)
     return torch.mean(individual_batch)
 
@@ -81,24 +84,25 @@ def post_process(model: nn.Module, pub_dataset: pd.DataFrame, priv_dataset: pd.D
         return final_preds
 
 
-def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset, optimizer: optim.Optimizer, n_epochs: int = n_epochs, early_stopping: bool = early, lr_name: str = None):
+def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: data.TensorDataset, optimizer: optim.Optimizer, n_epochs: int = n_epochs, early_stopping: bool = early):
     weights = None
     train_loss = []
     test_loss = []
 
-    criterion = nn.MSELoss()
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=7)
 
     if early_stopping:
         early_stopper = EarlyStopper(patience, min_delta)
 
     model.train()
-    # print("=> Starting training")
+    print("=> Starting training")
 
     for epoch in range(n_epochs):
 
-        # print(f"Epoch: {epoch+1}")
+        print(f"Epoch: {epoch+1}")
 
-        epoch_loss = []
+        total_loss = 0
+        total_samples = 0
 
         model.train()
 
@@ -107,14 +111,19 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
             
             y_pred = model(X_batch)
 
-            loss = criterion(y_pred, y_batch)
+            loss = MCRMSE(y_pred, y_batch)
+
+            total_loss += loss.item() * len(X_batch)
+            total_samples += len(X_batch)
 
             model.zero_grad()
             loss.backward()
             optimizer.step()
-            epoch_loss.append(loss.item())
         
-        train_loss.append(np.mean(epoch_loss))
+        average_epoch_loss = total_loss / total_samples
+        print(f"train loss: {average_epoch_loss}")
+
+        train_loss.append(average_epoch_loss)
 
 
         model.eval()
@@ -127,26 +136,33 @@ def train_model(model: nn.Module, train_loader: data.DataLoader, test_dataset: d
             l = MCRMSE(y_pred, y).item()
         
             test_loss.append(l)
+            print(f"test loss: {l}")
 
-            if early_stopping and early_stopper.early_stop(l):             
-                break
+            if early_stopping:
+                if early_stopper.early_stop(l):
+                    break
             
-            weights = model.state_dict()
+                if early_stopper.counter == 0:
+                    weights = model.state_dict()
+            
+            else:
+                weights = model.state_dict()
 
-            with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-                # temp_checkpoint_dir = os.mkdir(os.path.join(train.get_context().get_trial_dir(), "checkpoint"))
-                name = train.get_context().get_trial_name()
+            # with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+            #     name = train.get_context().get_trial_name()
 
-                torch.save(
-                    model.state_dict(),
-                    os.path.join(temp_checkpoint_dir, "weights.pt"),
-                )
+            #     torch.save(
+            #         model.state_dict(),
+            #         os.path.join(temp_checkpoint_dir, "weights.pt"),
+            #     )
                 
-                checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+            #     checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
 
-                train.report({"loss": l}, checkpoint = checkpoint)
+            #     train.report({"loss": l}, checkpoint = checkpoint)
         
             
-            # torch.save(weights, os.path.join(work_dir, "ray_weights", str(lr_name)))
+            # torch.save(weights, "./weights/weights.pt")
+            
+        scheduler.step(test_loss[-1])
 
     return weights, train_loss, test_loss

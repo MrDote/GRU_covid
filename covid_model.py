@@ -12,15 +12,13 @@ if seed:
 
 
 # TODO:
-#* weight init
-#* ray tune for param optimization: add early stopping to stop criteria
-#* check optim.step returning loss
+#* scored columns higher weighting
 
 
 
 #! CHECK MODEL ARCHITECTURE
 
-# model = GRU_model()
+# model = GRU()
 
 # run_summary(model)
 
@@ -62,27 +60,29 @@ if seed:
 
 #! TRAINING MODEL
 
-# model = GRU(68)
+model = GRU(68)
 
-# train_loader, dataset_test = make_loaders(n_samples)
-# optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-# early_stopper = EarlyStopper(patience, min_delta)
+train_loader, dataset_test = make_loaders(None)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-# weights, train_err, test_err = train_model(model, train_loader, dataset_test, optimizer)
+weights, train_err, test_err = train_model(model, train_loader, dataset_test, optimizer, n_epochs=60, early_stopping=False)
 
 
 #* save model weights
-# torch.save(weights, 'weights/covid/weights.pt')
+torch.save(weights, "weights/weights.pt")
 
 #* print training and testing errors
-# print(train_err)
-# print(test_err)
+print(train_err)
+print(test_err)
 
 
+#* plot loss
+import matplotlib.pyplot as plt
 
+plt.plot(train_err)
+plt.plot(test_err)
 
-
-
+plt.show()
 
 
 
@@ -91,16 +91,14 @@ if seed:
 
 #! POST-PROCESSING
 
-#* try models:
 
+# test = pd.read_json(data_dir + 'test.json', lines=True)
+# test_pub = test[test["seq_length"] == train_seq_len]
+# test_priv = test[test["seq_length"] == test_seq_len]
 
-test = pd.read_json(data_dir + 'test.json', lines=True)
-test_pub = test[test["seq_length"] == train_seq_len]
-test_priv = test[test["seq_length"] == test_seq_len]
+# weights = torch.load('weights/weights.pt')
+# # weights = torch.load("/Users/antonbelov/ray_results/objective_2023-11-10_16-57-31/objective_4a6a9086/checkpoint_000009/objective_4a6a9086.pt")
+# model = GRU()
 
-# weights = torch.load('weights/covid/weights.pt')
-weights = torch.load("/Users/antonbelov/ray_results/objective_2023-11-10_16-57-31/objective_4a6a9086/checkpoint_000009/objective_4a6a9086.pt")
-model = GRU()
-
-final_preds = post_process(model, test_pub, test_priv, weights)
-final_preds.to_csv("results/covid.csv.gz", compression="gzip")
+# final_preds = post_process(model, test_pub, test_priv, weights)
+# final_preds.to_csv("results/covid.csv.gz", compression="gzip")

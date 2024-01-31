@@ -5,11 +5,11 @@ from config import *
 
 
 class GRU(nn.Module):
-    def __init__(self, pred_len=None, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout=dropout, num_layers=num_layers, bidirectional=bidirectional, in_size=3, out_size=5):
+    def __init__(self, pred_len=None, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout_embeds=dropout_embeds, num_layers=num_layers, bidirectional=bidirectional, in_size=3, out_size=5):
         super().__init__()
         self.embeddings = nn.Embedding(len(mapping), embedding_dim)
-        self.gru = nn.GRU(embedding_dim*in_size, hidden_dim, num_layers=num_layers, batch_first=True, bidirectional=bidirectional)
-        self.dropout = nn.Dropout1d(p=dropout)
+        self.dropout = nn.Dropout1d(p=dropout_embeds)
+        self.gru = nn.GRU(embedding_dim*in_size, hidden_dim, num_layers=num_layers, batch_first=True, bidirectional=bidirectional, dropout=0.5)
         
         if bidirectional:
             self.linear = nn.Linear(hidden_dim*2, out_size)
@@ -22,8 +22,8 @@ class GRU(nn.Module):
     def forward(self, inputs):
         x = self.embeddings(inputs)
         x = x.reshape((x.shape[0], x.shape[1], -1))
-        x, _ = self.gru(x)
         x = self.dropout(x)
+        x, _ = self.gru(x)
         x = self.linear(x)
 
         if self.pred_len:
@@ -42,7 +42,6 @@ class EarlyStopper:
 
 
     def early_stop(self, validation_loss):
-        print(f"Counter: {self.counter}")
         if validation_loss < self.min_validation_loss:
             self.min_validation_loss = validation_loss
             self.counter = 0

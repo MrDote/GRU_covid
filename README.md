@@ -1,3 +1,27 @@
+# COVID-19 mRNA Vaccine Degradation Prediction Submission
+
+This is the model used to predict the mRNA vaccine degradation rates at different locations along various RNA sequences as part of the Kaggle competition.
+
+
+## Model
+
+The model used is a bidirectional GRU with an Embedding layer before and Linear layer after it. Dropout and early stopping is added later on. The full list of suggestions (implemented and left to explore) to improve the model's performance can be found [below](#performance-improvement-suggestions).
+
+
+
+## Required Packages
+
+- Ray
+- PyTorch
+- NumPy
+- Pandas
+- Torchinfo
+- Typing
+- Scikit-learn
+
+
+
+
 ## Performance improvement suggestions
 
 1. Different target column weighting (some more important to get right than others)
@@ -51,9 +75,3 @@
 20. ARNIE: software package of 6 libraries for generating xtra info for each sequence -> Base Pairing Probability matrix
 
 21. 3D foldings + distance between RNA bases
-
-
-
-# ??
-
-oof
